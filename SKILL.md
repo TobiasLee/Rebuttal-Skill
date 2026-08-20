@@ -1,13 +1,13 @@
 ---
 name: academic-rebuttal
 description: >
-  Two-stage academic rebuttal assistant. Given the paper abstract, reviewer
-  comments, scores, confidences, and venue constraints, first diagnose the
-  underlying concerns, assess whether rebuttal is worth the limited author time,
-  and produce a prioritized experiment-and-analysis plan. After the author
-  provides completed results, produce an evidence-grounded rebuttal, revision
-  plan, or resubmission plan. Never fabricate results, reviewer intent, citations,
-  or manuscript locations.
+  Use when an author has received peer-review comments and scores for an
+  academic paper and needs to diagnose underlying reviewer concerns, decide
+  whether a rebuttal is worthwhile, plan rebuttal experiments, or prepare
+  evidence-grounded response material and revision plans for the author to
+  review and finalize. Produces author-review material, never submission-ready
+  rebuttals; venue generative-AI policies must be checked before use. Never
+  fabricate results, reviewer intent, citations, or manuscript locations.
 ---
 
 # Academic Rebuttal Skill
@@ -26,14 +26,55 @@ This skill is intentionally **two-stage**:
    - Rank the experiments, analyses, and clarifications that are most likely to
      change the decision.
 
-2. **Rebuttal drafting**
+2. **Response material for author review**
    - Run only after the author provides completed results, verified manuscript
      evidence, or explicitly confirms that no additional experiment will be run.
-   - Write a concise rebuttal using **Direct Answer → Evidence → Revision**.
+   - Prepare concise response material using **Direct Answer → Evidence →
+     Revision**, clearly marked as a draft for the author to review and rewrite.
    - Keep all claims grounded in supplied evidence.
+   - The author — not the tool — decides what enters the final submitted
+     response and is responsible for venue-policy compliance and disclosure.
 
 The goal is not to answer every sentence equally. The goal is to resolve the few
 decision-critical doubts that determine acceptance.
+
+---
+
+# Policy First: Venue Rules on Generative Assistance
+
+Before using this skill, check the **current policy of the specific conference or
+venue** the paper is submitted to. Venue policies on generative assistance differ
+and change over time. If the policy is unclear, ask the venue chairs, or restrict
+the tool to triage and experiment planning only.
+
+ACL-family venues (ACL, NAACL, EACL, EMNLP, ARR-reviewed venues, and others
+following the ACL policies) require that any use of generative AI tools to
+create content — including content in review rebuttals — be appropriate and
+fully disclosed. See the ACL Policy on Publication Ethics, "Guidelines for
+Generative Assistance in Authorship," and the ARR "AI Writing/Coding Assistance
+Policy":
+
+- https://www.aclweb.org/adminwiki/index.php/ACL_Policy_on_Publication_Ethics
+- https://aclrollingreview.org/cfp
+
+## Language polishing vs. substantive content generation
+
+The ACL policy distinguishes them:
+
+| Language polishing | Substantive content generation |
+|---|---|
+| Paraphrasing or polishing the author's own sentences — like a grammar checker | Producing new analysis, claims, interpretations, or whole response drafts |
+| Treated like proofreading; generally does not require disclosure | Must be fully disclosed where permitted; any use outside the policy's listed cases is considered inappropriate |
+| The author's content and responsibility are unchanged | Authors remain fully responsible and must verify accuracy and plagiarism |
+
+## Consequences for this skill
+
+- This skill produces **analysis, plans, and response material for the author to
+  review, correct, and rewrite**. It never produces a submission-ready rebuttal.
+- The author decides what enters the final response and is responsible for any
+  disclosure the venue requires.
+- Never upload confidential material (chair-only notes, meta-reviews not shared
+  with the author, or reviewer identities) into any tool.
 
 ---
 
@@ -97,19 +138,22 @@ When the user initially provides only reviews, scores, and an abstract:
   4. prioritized experiment and analysis plan;
   5. clarification-only actions;
   6. a result-reporting template for the authors;
-  7. resubmission advice when appropriate.
+  7. resubmission advice when appropriate;
+  8. any venue generative-assistance restrictions the policy check surfaced.
 
 After the user provides completed results:
 
 - validate which concerns the results address;
 - identify any remaining evidence gaps;
-- draft the rebuttal;
+- prepare response material for the author to review, correct, and rewrite —
+  not a submission-ready rebuttal;
 - include a concrete manuscript revision list;
-- report the final word or character count when a limit is supplied.
+- report the final word or character count when a limit is supplied;
+- flag any disclosure the venue's generative-assistance policy requires.
 
 Exception: if no new experiment is necessary, or the user explicitly asks for a
 draft based only on existing evidence, produce a draft but visibly mark every
-unsupported or missing claim.
+unsupported or missing claim, and present it as author-review material.
 
 ---
 
@@ -669,7 +713,11 @@ Template:
 
 ---
 
-# Stage 2A: Draft the Rebuttal
+# Stage 2A: Prepare Response Material for Author Review
+
+This stage assembles response material for the author to review, correct, and
+rewrite. It does not produce a submission-ready rebuttal: the author decides
+what enters the final response and handles venue-required disclosure.
 
 ## 2A.1 Write for the neutral decision-maker
 
@@ -972,7 +1020,10 @@ Never:
 - conceal a negative added result;
 - state reviewer intent as certain when it is ambiguous;
 - promise that a future experiment will succeed;
-- recommend a rushed experiment without interpretable controls.
+- recommend a rushed experiment without interpretable controls;
+- present generated text as a submission-ready rebuttal;
+- skip the venue generative-assistance policy check or fail to flag required
+  disclosure to the author.
 
 When uncertain, say so and provide the safest next action.
 
@@ -1060,9 +1111,9 @@ Return:
 5. rebuttal-ready claims;
 6. claims that must be narrowed.
 
-## Mode 3: `FULL_REBUTTAL`
+## Mode 3: `RESPONSE_DRAFT`
 
-Return:
+Assemble response material for the author to review, correct, and rewrite:
 
 1. opening summary;
 2. merged major-concern responses;
@@ -1070,7 +1121,12 @@ Return:
 4. grouped minor comments;
 5. concrete manuscript revision list;
 6. optional confidential chair note;
-7. exact word or character count.
+7. exact word or character count;
+8. venue-policy disclosure note, when the venue requires one.
+
+This is **not** a submission-ready rebuttal. The author must verify every claim,
+edit or rewrite the text as their own, and ensure the final response complies
+with the venue's policy on generative assistance.
 
 ## Mode 4: `RESUBMISSION_PLAN`
 
@@ -1110,18 +1166,20 @@ Check for:
 When reviews, scores, and abstract are supplied:
 
 1. parse venue and time constraints;
-2. normalize the score scale;
-3. run the rebuttal-versus-resubmission gate;
-4. extract the abstract's claim map;
-5. split reviews into atomic concerns;
-6. infer the underlying reason for each;
-7. surface uncertain interpretations;
-8. classify severity, sharedness, decision impact, and resolution confidence;
-9. identify evidence already available;
-10. create the P0–P3 experiment plan;
-11. separate clarification-only work from experiments;
-12. provide the result-reporting template;
-13. provide a resubmission roadmap if expected rebuttal return is low.
+2. check the venue's current generative-assistance policy and surface any
+   restrictions or required disclosures to the author;
+3. normalize the score scale;
+4. run the rebuttal-versus-resubmission gate;
+5. extract the abstract's claim map;
+6. split reviews into atomic concerns;
+7. infer the underlying reason for each;
+8. surface uncertain interpretations;
+9. classify severity, sharedness, decision impact, and resolution confidence;
+10. identify evidence already available;
+11. create the P0–P3 experiment plan;
+12. separate clarification-only work from experiments;
+13. provide the result-reporting template;
+14. provide a resubmission roadmap if expected rebuttal return is low.
 
 ## After results arrive
 
@@ -1130,11 +1188,13 @@ When reviews, scores, and abstract are supplied:
 3. label each concern resolved, partial, or unresolved;
 4. decide whether more experiments are worth the remaining time;
 5. derive only claims supported by the results;
-6. draft the rebuttal using Direct Answer → Evidence → Revision;
+6. prepare response material using Direct Answer → Evidence → Revision, marked
+   for author review and rewriting — not submission-ready text;
 7. add exact manuscript changes;
 8. check tone and process integrity;
 9. count words or characters;
-10. compress without removing decision-critical evidence.
+10. compress without removing decision-critical evidence;
+11. flag any disclosure the venue's generative-assistance policy requires.
 
 ---
 
@@ -1167,8 +1227,12 @@ When reviews, scores, and abstract are supplied:
 - [ ] Clarifications are not disguised as experiments.
 - [ ] Long-horizon work is deferred to resubmission.
 
-## Rebuttal draft
+## Response draft
 
+- [ ] The venue's generative-assistance policy was checked and restrictions or
+      required disclosures were flagged to the author.
+- [ ] The output is presented as author-review material, not a submission-ready
+      rebuttal.
 - [ ] Major concerns appear before minor comments.
 - [ ] Each major response begins with a direct answer.
 - [ ] Each empirical claim is supported by supplied evidence.
@@ -1196,6 +1260,10 @@ When reviews, scores, and abstract are supplied:
 Do not:
 
 - draft a polished final rebuttal before identifying the real concerns;
+- present AI-generated text as a submission-ready response without author
+  review, rewriting, and a venue-policy check;
+- skip the venue's generative-assistance policy check or omit required
+  disclosure from the final response;
 - treat every reviewer sentence as equally important;
 - recommend an unranked list of experiments;
 - prioritize easy P2 work over decision-critical P0 work;
@@ -1224,17 +1292,22 @@ Do not:
 >
 > **Deadline and resources:** `[time remaining, compute, author bandwidth]`
 >
+> **Venue generative-assistance policy:** `[link to the current policy of the
+> venue, or state that it is unknown]`
+>
 > **Abstract:** `[abstract]`
 >
 > **Reviews, scores, and confidences:** `[reviews]`
 >
-> First assess rebuttal viability. Infer the underlying concern behind every
-> review comment and visibly flag uncertain interpretations. Then produce a
-> prioritized P0–P3 experiment and analysis plan based on severity, sharedness,
-> decision impact, feasibility, and cost. Separate experiments from clarification
-> work. If all reviews are below the venue borderline or there is no plausible
-> path to changing the decision, explain that rebuttal may have low expected
-> return and provide an actionable resubmission roadmap.
+> First check the venue's current policy on generative assistance and surface
+> any restrictions or required disclosures. Then assess rebuttal viability.
+> Infer the underlying concern behind every review comment and visibly flag
+> uncertain interpretations. Then produce a prioritized P0–P3 experiment and
+> analysis plan based on severity, sharedness, decision impact, feasibility,
+> and cost. Separate experiments from clarification work. If all reviews are
+> below the venue borderline or there is no plausible path to changing the
+> decision, explain that rebuttal may have low expected return and provide an
+> actionable resubmission roadmap.
 
 ## Added-result integration
 
@@ -1242,9 +1315,12 @@ Do not:
 > `[results and protocols]`
 >
 > Validate which reviewer concerns they address, identify remaining gaps, and
-> state which claims are supported, unsupported, or need narrowing. Then draft
-> the rebuttal using Direct Answer → Evidence → Revision. Do not invent missing
-> settings, results, or manuscript locations.
+> state which claims are supported, unsupported, or need narrowing. Then
+> prepare response material for author review using Direct Answer → Evidence →
+> Revision. This is not a submission-ready rebuttal: the author must review and
+> rewrite it, and comply with the venue's generative-assistance policy,
+> including any required disclosure. Do not invent missing settings, results,
+> or manuscript locations.
 
 ## Resubmission-only mode
 
