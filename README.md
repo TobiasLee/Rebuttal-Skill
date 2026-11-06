@@ -71,3 +71,7 @@ and produce a prioritized P0-P3 experiment and analysis plan...
 | Venue & score scale | Changes authors are willing to make |
 | Deadline / time remaining | Claims authors are willing to narrow |
 | Available compute & bandwidth | |
+
+## License
+
+This project is licensed under the [MIT License](LICENSE). Copyright (c) 2026 Lei Li (TobiasLee).
